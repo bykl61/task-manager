@@ -2,6 +2,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router'
 import App from './App.vue'
+import { toastPlugin } from '@/plugins/toast.js'; // PrimeFlex
+
 
 // PrimeVue
 import PrimeVue from 'primevue/config'
@@ -26,7 +28,7 @@ import SelectButton from 'primevue/selectbutton';
 import 'primevue/resources/themes/lara-light-blue/theme.css'
 import 'primevue/resources/primevue.min.css'
 import 'primeicons/primeicons.css'
-import '/node_modules/primeflex/primeflex.css' // PrimeFlex
+import '/node_modules/primeflex/primeflex.css'
 
 
 const app = createApp(App)
@@ -35,6 +37,7 @@ app.use(createPinia())
 app.use(router)
 app.use(PrimeVue)
 app.use(ToastService)
+app.use(toastPlugin)
 app.use(ConfirmationService)
 
 // Register PrimeVue Components

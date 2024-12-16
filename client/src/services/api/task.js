@@ -4,7 +4,7 @@ export const taskService = {
   async getTasks(params) {
     try {
       const response = await api.get('/tasks', { params })
-      return response
+      return response.data
     } catch (error) {
       throw this.handleError(error)
     }
@@ -17,7 +17,7 @@ export const taskService = {
           'Content-Type': 'multipart/form-data'
         }
       });
-      return data; // Direkt olarak data'yı döndür
+      return data;
     } catch (error) {
       throw this.handleError(error);
     }

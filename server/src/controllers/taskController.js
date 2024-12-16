@@ -1,3 +1,4 @@
+import HttpHelper from '../utils/httpHelper.js';
 import taskService from '../services/taskService.js';
 
 class TaskController {
@@ -9,25 +10,25 @@ class TaskController {
     );
 
     if (result.error) {
-      return res.status(400).json(result.error);
+      return HttpHelper.error(res, result.error);
     }
 
-    res.status(201).json(result.data);
+    return HttpHelper.success(res, result.data);
   }
 
   async get(req, res) {
     const result = await taskService.get(req.user.id, req.params.id);
 
     if (result.error) {
-      return res.status(404).json(result.error);
+      return HttpHelper.error(res, result.error);
     }
 
-    res.json(result.data);
+    return HttpHelper.success(res, result.data);
   }
 
   async all(req, res) {
     const result = await taskService.all(req.user.id, req.query);
-    res.json(result.data);
+    return HttpHelper.success(res, result.data);
   }
 
   async update(req, res) {
@@ -39,20 +40,20 @@ class TaskController {
     );
 
     if (result.error) {
-      return res.status(400).json(result.error);
+      return HttpHelper.error(res, result.error);
     }
 
-    res.json(result.data);
+    return HttpHelper.success(res, result.data);
   }
 
   async delete(req, res) {
     const result = await taskService.delete(req.user.id, req.params.id);
 
     if (result.error) {
-      return res.status(404).json(result.error);
+      return HttpHelper.error(res, result.error);
     }
 
-    res.json({ message: 'Task deleted successfully' });
+    return HttpHelper.success(res, { message: 'Task deleted successfully' });
   }
 }
 

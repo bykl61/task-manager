@@ -6,7 +6,7 @@
         h1 Görev Yöneticisi
         Button.new-task-button(
           severity="success"
-          @click="showNewTaskDialog = true"
+          @click="openNewTask"
           :loading="loading"
         )
           i.pi.pi-plus
@@ -102,7 +102,8 @@
                   :binary="true"
                   @update:modelValue="(value) => handleTaskStatusChange(task, value)"
                   :disabled="loading"
-                )
+                  )
+
 
         // Empty State
         Card.empty-state(v-if="tasks?.length === 0")
@@ -148,9 +149,8 @@
       )
 </template>
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, inject } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
-import { useToast } from 'primevue/usetoast';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Card from 'primevue/card';
@@ -163,7 +163,7 @@ import TaskDetailModal from '@/views/task/TaskDetailModal.vue';
 import CreateTaskModal from '@/views/task/CreateTaskModal.vue';
 
 const confirm = useConfirm();
-const toast = useToast();
+const toast = inject('toast');
 
 // States
 const tasks = ref([]);
@@ -227,7 +227,12 @@ const priorityValues = {
   'low': 1
 };
 
-// Güncellenmiş sıralama fonksiyonu
+
+const openNewTask = () => {
+  selectedTask.value = null;
+  showNewTaskDialog.value = true;
+};
+
 const handleSort = (field) => {
   if (sortField.value === field) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
@@ -262,7 +267,6 @@ const handleSort = (field) => {
   });
 };
 
-// Sıralama ikonunu belirlemek için
 const getSortIcon = (field) => {
   if (sortField.value !== field) return 'pi pi-sort';
   return sortOrder.value === 'asc' ? 'pi pi-sort-up' : 'pi pi-sort-down';
@@ -289,7 +293,10 @@ const buildFilterParams = () => {
   }
 
   if (filters.value.endDate) {
-    params.endDate = new Date(filters.value.endDate).toISOString().split('T')[0];
+    const date = new Date(filters.value.endDate);
+    date.setHours(23, 59, 59, 999);
+    date.setHours(date.getHours() + 3);
+    params.endDate = date.toISOString();
   }
 
   if (filters.value.hasAttachment) {
@@ -312,11 +319,7 @@ const fetchTasks = async () => {
     tasks.value = response || [];
     totalRecords.value = response.total;
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Tasks could not be loaded'
-    });
+    toast.error('Tasks could not be loaded');
   } finally {
     loading.value = false;
   }
@@ -329,49 +332,35 @@ const handleTaskSubmit = async (formData) => {
 
     if (selectedTask.value) {
       await taskService.updateTask(selectedTask.value.id, formData);
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Task updated successfully'
-      });
+      toast.success('Task updated successfully')
     } else {
       await taskService.createTask(formData);
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Task created successfully'
-      });
+      toast.success('Task created successfully')
     }
 
     closeTaskDialog();
     fetchTasks();
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message
-    });
+    toast.error( error.message);
   } finally {
     loading.value = false;
   }
 };
 
-const handleTaskStatusChange = async (task) => {
+const handleTaskStatusChange = async (task, checked) => {
   try {
     loading.value = true;
-    await taskService.updateTask(task.id, { status: task.completed });
-    toast.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: `Task ${task.completed ? 'completed' : 'pending'}`
+    const newStatus = checked ? 'completed' : 'pending';
+
+    await taskService.updateTask(task.id, {
+      status: newStatus
     });
+
+    toast.success( `Task ${newStatus === 'completed' ? 'completed' : 'pending'}`);
+
     await fetchTasks();
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message
-    });
+    toast.error(error.message);
   } finally {
     loading.value = false;
   }
@@ -390,18 +379,10 @@ const deleteTask = async (taskId) => {
   try {
     loading.value = true;
     await taskService.deleteTask(taskId);
-    toast.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: 'Task deleted successfully'
-    });
+    toast.success('Task deleted successfully');
     fetchTasks();
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message
-    });
+    toast.error(error.message);
   } finally {
     loading.value = false;
   }
@@ -413,7 +394,7 @@ const openTaskDetails = (task) => {
 };
 
 const openEditTask = (task) => {
-  selectedTask.value = task;
+  selectedTask.value = { ...task };
   showNewTaskDialog.value = true;
 };
 

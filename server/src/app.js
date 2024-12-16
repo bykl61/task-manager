@@ -14,11 +14,11 @@ const PORT = process.env.PORT || 3000;
 // Database connections
 const initializeServices = async () => {
   try {
-    // Önce MongoDB bağlantısı
+    // MongoDB
     await mongooseConnection();
     console.log('MongoDB connected');
 
-    // Sonra MySQL
+    // MySQL
     await sequelize.authenticate();
     await sequelize.sync();
     console.log('MySQL connected');
@@ -46,7 +46,6 @@ app.use('/api', router);
 app.use((err, req, res, next) => {
   console.error(err.stack);
 
-  // File upload hataları
   if (err instanceof multer.MulterError) {
     return res.status(400).json({
       error: 'File upload error',
@@ -54,7 +53,6 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Validation hataları
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       error: 'Validation error',
@@ -62,7 +60,6 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Diğer tüm hatalar
   res.status(500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
